@@ -2,3 +2,22 @@ selmag:
   services:
     catalogue:
       uri: http://localhost:8081
+spring:
+  security:
+    oauth2:
+      client:
+        provider: #поставщик oauth. то место где мы авторизуемся и аутенцифицируемся при применениии openid-connect
+          keycloak:
+            issuer-uri: http://localhost:8082/realms/selmag
+            user-name-attribute: preferred_username
+        registration: #регистрация клиента в этой системе
+          manager-app:
+            provider: keycloak
+            client-id: manager-app
+            client-secret: LMHpg9RdN2ndiWnbdWugvaG511hKmkXl
+            scope:
+              - openid
+              - view_catalogue
+              - edit_catalogue
+              - microprofile-jwt
+
