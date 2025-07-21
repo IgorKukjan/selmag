@@ -19,7 +19,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class RestClientProductsRestClient implements ProductsRestClient {
 
-    private static final ParameterizedTypeReference<List<Product>> PRODUCTS_TYPE_REFERENCE = new ParameterizedTypeReference<>() {};
+    private static final ParameterizedTypeReference<List<Product>> PRODUCTS_TYPE_REFERENCE =
+            new ParameterizedTypeReference<>() {};
 
     private final RestClient restClient;
 
@@ -36,7 +37,7 @@ public class RestClientProductsRestClient implements ProductsRestClient {
         try{
             return this.restClient
                     .post()
-                    .uri("catalogue-api/products")
+                    .uri("/catalogue-api/products")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(new NewProductPayload(title, details))//тело запроса
                     .retrieve().body(Product.class);//тело ответа преобразовать к такому типу
@@ -51,7 +52,7 @@ public class RestClientProductsRestClient implements ProductsRestClient {
         try{
             return Optional.ofNullable(this.restClient
                     .get()
-                    .uri("catalogue-api/products/{productId}", productId)
+                    .uri("/catalogue-api/products/{productId}", productId)
                     .retrieve().body(Product.class));
         }catch (HttpClientErrorException.NotFound exception){
             return Optional.empty();
@@ -63,7 +64,7 @@ public class RestClientProductsRestClient implements ProductsRestClient {
         try{
             this.restClient
                     .patch()
-                    .uri("catalogue-api/products/{productId}", productId)
+                    .uri("/catalogue-api/products/{productId}", productId)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(new UpdateProductPayload(title, details))//тело запроса
                     .retrieve().toBodilessEntity();//тело ответа
@@ -78,7 +79,7 @@ public class RestClientProductsRestClient implements ProductsRestClient {
         try{
              this.restClient
                      .delete()
-                     .uri("catalogue-api/products/{productId}", productId)
+                     .uri("/catalogue-api/products/{productId}", productId)
                      .retrieve().toBodilessEntity();
         }catch (HttpClientErrorException.NotFound exception){
             throw new NoSuchElementException(exception);

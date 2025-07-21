@@ -2,6 +2,7 @@ selmag:
   services:
     catalogue:
       uri: http://localhost:8081
+      registration-id: keycloak
 spring:
   security:
     oauth2:
@@ -11,10 +12,10 @@ spring:
             issuer-uri: http://localhost:8082/realms/selmag
             user-name-attribute: preferred_username
         registration: #регистрация клиента в этой системе
-          manager-app:
+          keycloak:
             provider: keycloak
             client-id: manager-app
-            client-secret: LMHpg9RdN2ndiWnbdWugvaG511hKmkXl
+            client-secret: JwByKV4Y8m95GDYTNqJH6jfaj5dXpv8F
             scope:
               - openid
               - view_catalogue

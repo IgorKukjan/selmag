@@ -25,9 +25,10 @@ public class SecurityBeans {
         return http
 
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-//                        .anyRequest().authenticated())
-                          .anyRequest().hasRole("MANAGER"))
+                        .anyRequest().authenticated())
+//                          .anyRequest().hasRole("MANAGER"))
                 .oauth2Login(Customizer.withDefaults())
+                .oauth2Client(Customizer.withDefaults())
 
                 .build();
     }
