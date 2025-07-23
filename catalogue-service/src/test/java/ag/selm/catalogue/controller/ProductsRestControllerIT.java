@@ -17,7 +17,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@Transactional
+@Transactional//бд в исходное состояние
+              //каждый тестовый метод будет выполняться в новой транзакции
 @SpringBootTest
 @AutoConfigureMockMvc
 class ProductsRestControllerIT {
@@ -46,6 +47,58 @@ class ProductsRestControllerIT {
                                     {"id": 3, "title": "Товар №3", "details": "Описание товара №3"}
                                 ]""")
                 );
+    }
+
+    @Test
+    void createProduct_RequestIsValid_ReturnsNewProduct() throws Exception {
+        // given
+        var requestBuilder = MockMvcRequestBuilders.post("/catalogue-api/products")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"title":  "Ещё один новый товар", "details": "Какое-то описание нового товара"}
+                """)
+                .with(jwt().jwt(builder -> builder.claim("scope", "edit_catalogue")));
+
+        // when
+        this.mockMvc.perform(requestBuilder)
+
+        // then
+                .andDo(print())
+                .andExpectAll(
+                        status().isCreated(),
+                        header().string(HttpHeaders.LOCATION, "http://localhost/catalogue-api/products/1"),
+                        content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON),
+                        content().json("""
+                          {"id": 1, "title":  "Ещё один новый товар", "details": "Какое-то описание нового товара"}
+                        """)
+
+                );
+    }
+
+
+    @Test
+    void createProduct_RequestIsInvalid_ReturnsProblemDetail() throws Exception {
+        // given
+        var requestBuilder = MockMvcRequestBuilders.post("/catalogue-api/products")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"title": "  ", "details": null}""")
+                .locale(Locale.of("ru", "RU"))
+                .with(jwt().jwt(builder -> builder.claim("scope", "edit_catalogue")));
+
+        // when
+        this.mockMvc.perform(requestBuilder)
+                // then
+                .andDo(print())
+                .andExpectAll(
+                        status().isBadRequest(),
+                        content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON),
+                        content().json("""
+                                {
+                                    "errors": [
+                                        "Название товара должно быть от 3 до 50 символов"
+                                    ]
+                                }"""));
     }
 
 }
