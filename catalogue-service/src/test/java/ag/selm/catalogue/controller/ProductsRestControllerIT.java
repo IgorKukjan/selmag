@@ -101,4 +101,21 @@ class ProductsRestControllerIT {
                                 }"""));
     }
 
+    @Test
+    void createProduct_UserIsNotAuthorized_ReturnsForbidden() throws Exception {
+        // given
+        var requestBuilder = MockMvcRequestBuilders.post("/catalogue-api/products")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"title": "  ", "details": null}""")
+                .locale(Locale.of("ru", "RU"))
+                .with(jwt().jwt(builder -> builder.claim("scope", "view_catalogue")));
+
+        // when
+        this.mockMvc.perform(requestBuilder)
+                // then
+                .andDo(print())
+                .andExpectAll(
+                        status().isForbidden());
+    }
 }
