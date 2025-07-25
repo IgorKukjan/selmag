@@ -50,6 +50,28 @@ class ProductsRestControllerIT {
     }
 
     @Test
+    @Sql("/sql/products.sql")
+    void findProducts_UserIsNotAuthorized_ReturnsForbidden() throws Exception{
+        //given
+        //создать get запрос можем при помощи MockMvc
+        var requestBuilder = MockMvcRequestBuilders.get("/catalogue-api/products")
+                .param("filter", "товар")
+                .with(jwt());
+
+
+        //when
+        //выполняем запрос
+        this.mockMvc.perform(requestBuilder)
+
+        //then
+        .andDo(print())
+                //валидируем что получили
+                .andExpectAll(
+                        status().isForbidden()
+                );
+    }
+
+    @Test
     void createProduct_RequestIsValid_ReturnsNewProduct() throws Exception {
         // given
         var requestBuilder = MockMvcRequestBuilders.post("/catalogue-api/products")
