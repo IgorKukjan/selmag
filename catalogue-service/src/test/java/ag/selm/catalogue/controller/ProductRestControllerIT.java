@@ -46,6 +46,21 @@ class ProductRestControllerIT {
 
     @Test
     @Sql("/sql/products.sql")
+    void findProduct_ProductDoesNotExist_ReturnsNotFound() throws Exception {
+        // given
+        var requestBuilder = MockMvcRequestBuilders.get("/catalogue-api/products/5")
+                .with(jwt().jwt(builder -> builder.claim("scope", "view_catalogue")));
+
+        // when
+        this.mockMvc.perform(requestBuilder)
+
+        // then
+            .andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @Sql("/sql/products.sql")
     void updateProduct_RequestIsValid_ReturnsNoContent() throws Exception {
         //given
         var requstBuilder = MockMvcRequestBuilders.patch("/catalogue-api/products/1")
@@ -66,6 +81,26 @@ class ProductRestControllerIT {
 
     @Test
     @Sql("/sql/products.sql")
+    void updateProduct_ProductDoesNotExist_ReturnsNotFound() throws Exception {
+        //given
+        var requstBuilder = MockMvcRequestBuilders.patch("/catalogue-api/products/5")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                  {"title": "Одновленный товар", "details":  "Обновленное описание обновленного товара"}
+                """)
+                .with(jwt().jwt(builder -> builder.claim("scope", "edit_catalogue")));
+        //when
+        this.mockMvc.perform(requstBuilder)
+
+                //then
+                .andDo(print())
+                .andExpectAll(
+                        status().isNotFound()
+                );
+    }
+
+    @Test
+    @Sql("/sql/products.sql")
     void deleteProduct_RequestIsValid_ReturnsNoContent() throws Exception {
         //given
         var requestBuilder = MockMvcRequestBuilders.delete("/catalogue-api/products/1")
@@ -77,6 +112,22 @@ class ProductRestControllerIT {
             .andDo(print())
                 .andExpectAll(
                        status().isNoContent()
+                );
+    }
+
+    @Test
+    @Sql("/sql/products.sql")
+    void deleteProduct_ProductDoesNotExist_ReturnsNotFound() throws Exception {
+        //given
+        var requestBuilder = MockMvcRequestBuilders.delete("/catalogue-api/products/5")
+                .with(jwt().jwt(builder -> builder.claim("scope", "edit_catalogue")));
+        //when
+        this.mockMvc.perform(requestBuilder)
+
+                //then
+                .andDo(print())
+                .andExpectAll(
+                        status().isNotFound()
                 );
     }
 }
