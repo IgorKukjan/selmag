@@ -11,6 +11,8 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Locale;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -78,6 +80,31 @@ class ProductRestControllerIT {
                         status().isNoContent()
                 );
     }
+
+    @Test
+    @Sql("/sql/products.sql")
+    void updateProduct_RequestIsInvalid_ReturnsBadRequest() throws Exception {
+        //given
+        var requstBuilder = MockMvcRequestBuilders.patch("/catalogue-api/products/1")
+                .locale(Locale.of("ru"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"title": "  ", "details": null}""")
+                .with(jwt().jwt(builder -> builder.claim("scope", "edit_catalogue")));
+        //when
+        this.mockMvc.perform(requstBuilder)
+
+                //then
+                .andDo(print())
+                .andExpectAll(
+                        status().isBadRequest(),
+                        content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON),
+                        content().json("""
+                          {"errors": ["Название товара должно быть от 3 до 50 символов"]}
+                        """)
+                );
+    }
+
 
     @Test
     @Sql("/sql/products.sql")
