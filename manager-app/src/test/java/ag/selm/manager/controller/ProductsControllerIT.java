@@ -72,6 +72,25 @@ class ProductsControllerIT {
     }
 
     @Test
+    void getProductsList_UserIsNotAuthorized_ReturnsForbidden() throws Exception {
+        //given
+        var requestBuilder = MockMvcRequestBuilders.get("/catalogue/products/list")
+                .queryParam("filter", "товар")
+                .with(user("j.daniels"));
+
+
+        //when
+        this.mockMvc.perform(requestBuilder)
+
+                //then
+                .andDo(print())
+                .andExpectAll(
+                        status().isForbidden()
+                );
+
+    }
+
+    @Test
     void getNewProductPage_ReturnsProductPage() throws Exception {
         //given - описываем параметры запроса, которые мы собираемся отправить в mockmvc
         var requestBuilder = MockMvcRequestBuilders.get("/catalogue/products/create")
@@ -87,6 +106,24 @@ class ProductsControllerIT {
                         view().name("catalogue/products/new_product")
                 );
     }
+
+    @Test
+    void getNewProductPage_UserIsNotAuthorized_ReturnsForbidden() throws Exception {
+        //given - описываем параметры запроса, которые мы собираемся отправить в mockmvc
+        var requestBuilder = MockMvcRequestBuilders.get("/catalogue/products/create")
+                .with(user("j.daniels"));
+
+        //when
+        this.mockMvc.perform(requestBuilder)
+
+                //then
+                .andDo(print())
+                .andExpectAll(
+                        status().isForbidden()
+                );
+    }
+
+
 
     @Test
     void createProduct_RequestIsValid_RedirectsToProductPage() throws Exception {
@@ -177,4 +214,22 @@ class ProductsControllerIT {
                 """)));
     }
 
+    @Test
+    void createProduct_UserIsNotAuthorized_ReturnsForbidden() throws Exception {
+        //given
+        var requestBuilder = MockMvcRequestBuilders.post("/catalogue/products/create")
+                .param("title", "Новый товар")
+                .param("details", "Описание нового товара")
+                .with(user("j.daniels"))
+                .with(csrf());
+
+        //when
+        this.mockMvc.perform(requestBuilder)
+
+                //then
+                .andDo(print())
+                .andExpectAll(
+                        status().isForbidden()
+                );
+    }
 }
