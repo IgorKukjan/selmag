@@ -1,5 +1,6 @@
 package ag.selm.manager.controller;
 
+import ag.selm.manager.controller.payload.NewProductPayload;
 import ag.selm.manager.entity.Product;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
@@ -14,12 +15,15 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.List;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+
 @SpringBootTest
 @AutoConfigureMockMvc
+//поднимает реальный компонент, который имеет порт на машине с замоканным поведением
 @WireMockTest(httpPort = 54321)
 class ProductsControllerIT {
 
@@ -33,9 +37,12 @@ class ProductsControllerIT {
                 .queryParam("filter", "товар")
                 .with(user("j.dewar").roles("MANAGER"));
 
+        //замокать поведение сервиса
+        //WireMock.get-GET-запрос на url "/catalogue-api/products"
         WireMock.stubFor(WireMock.get(WireMock.urlPathMatching("/catalogue-api/products"))
                 .withQueryParam("filter", WireMock.equalTo("товар"))
-                .willReturn(WireMock.ok("""
+                .willReturn(WireMock
+                        .ok/*статус*/(""" 
                         [
                             {"id": 1, "title": "Товар №1", "details": "Описание товара №1"},
                             {"id": 2, "title": "Товар №2", "details": "Описание товара №2"}
@@ -58,6 +65,8 @@ class ProductsControllerIT {
                 );
 
 
+        //Можно провалидировать, что вызов данного метода у нас был
+        //getRequestedFor-GET-запрос "/catalogue-api/products"
         WireMock.verify(WireMock.getRequestedFor(WireMock.urlPathMatching("/catalogue-api/products"))
                 .withQueryParam("filter", WireMock.equalTo("товар")));
     }
@@ -78,4 +87,94 @@ class ProductsControllerIT {
                         view().name("catalogue/products/new_product")
                 );
     }
+
+    @Test
+    void createProduct_RequestIsValid_RedirectsToProductPage() throws Exception {
+        //given
+        var requestBuilder = MockMvcRequestBuilders.post("/catalogue/products/create")
+                .param("title", "Новый товар")
+                .param("details", "Описание нового товара")
+                .with(user("j.dewar").roles("MANAGER"))
+                .with(csrf());
+
+        //замокать поведение сервиса
+        //WireMock.post-POST-запрос на url "/catalogue-api/products"
+        WireMock.stubFor(WireMock.post(WireMock.urlPathMatching("/catalogue-api/products"))
+                        .withRequestBody(WireMock.equalToJson("""
+                          {"title": "Новый товар", "details": "Описание нового товара"}
+                        """))
+                .willReturn(WireMock
+                        .created()//статус
+                        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withBody("""
+                                {"id": 1, "title": "Новый товар", "details": "Описание нового товара"}
+                                """)
+                )
+
+                );
+
+        //when
+        this.mockMvc.perform(requestBuilder)
+
+        //then
+                .andDo(print())
+                .andExpectAll(
+                        status().is3xxRedirection(),
+                        header().string(HttpHeaders.LOCATION, "/catalogue/products/1")
+                );
+
+        //Можно провалидировать, что вызов данного метода у нас был
+        //postRequestedFor-POST-запрос "/catalogue-api/products"
+        WireMock.verify(WireMock.postRequestedFor(WireMock.urlPathMatching("/catalogue-api/products"))
+                .withRequestBody(WireMock.equalToJson("""
+                  {"title": "Новый товар", "details": "Описание нового товара"}
+                """)));
+    }
+
+
+    @Test
+    void createProduct_RequestIsInvalid_ReturnsNewProductPage() throws Exception {
+        //given
+        var requestBuilder = MockMvcRequestBuilders.post("/catalogue/products/create")
+                .param("title", "  ")
+//                .param("details", null)
+                .with(user("j.dewar").roles("MANAGER"))
+                .with(csrf());
+
+        //замокать поведение сервиса
+        //WireMock.post-POST-запрос на url "/catalogue-api/products"
+        WireMock.stubFor(WireMock.post(WireMock.urlPathMatching("/catalogue-api/products"))
+                .withRequestBody(WireMock.equalToJson("""
+                          {"title": "  ", "details": null}
+                        """))
+                .willReturn(WireMock
+                        .badRequest()//статус
+                        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PROBLEM_JSON_VALUE)
+                        .withBody("""
+                                 {"errors": ["Ошибка 1", "Ошибка 2"]}
+                                """)
+                )
+
+        );
+
+        //when
+        this.mockMvc.perform(requestBuilder)
+
+                //then
+                .andDo(print())
+                .andExpectAll(
+                        status().isBadRequest(),
+                        view().name("catalogue/products/new_product"),
+                        model().attribute("payload", new NewProductPayload("  ", null)),
+                        model().attribute("errors", List.of("Ошибка 1", "Ошибка 2"))
+                );
+
+        //Можно провалидировать, что вызов данного метода у нас был
+        //postRequestedFor-POST-запрос "/catalogue-api/products"
+        WireMock.verify(WireMock.postRequestedFor(WireMock.urlPathMatching("/catalogue-api/products"))
+                .withRequestBody(WireMock.equalToJson("""
+                  {"title": "  ", "details": null}
+                """)));
+    }
+
 }

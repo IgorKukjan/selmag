@@ -21,6 +21,8 @@ public class ClientsBeans {
             @Value("${selmag.services.catalogue.registration-id:keycloak}") String registrationId) {
         return new RestClientProductsRestClient(RestClient.builder()
                 .baseUrl(catalogueBaseUri)
+                //будет обращение к классам, которые задействованы для получения аунтефикации/авторизации в Oauth в Keycloak
+                //при тестах нужно замокать см TestingBeans
                 .requestInterceptor(
                         new OAuthClientHttpRequestInterceptor(
                             new DefaultOAuth2AuthorizedClientManager(clientRegistrationRepository, authorizedClientRepository),
