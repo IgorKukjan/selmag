@@ -63,6 +63,21 @@ class ProductRestControllerIT {
 
     @Test
     @Sql("/sql/products.sql")
+    void findProduct_UserIsNotAuthorized_ReturnsForbidden() throws Exception {
+        //given
+        var requestBuilder = MockMvcRequestBuilders.get("/catalogue-api/products/1")
+                .with(jwt());
+
+        //when
+        this.mockMvc.perform(requestBuilder)
+
+                //then
+                .andDo(print())
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Sql("/sql/products.sql")
     void updateProduct_RequestIsValid_ReturnsNoContent() throws Exception {
         //given
         var requstBuilder = MockMvcRequestBuilders.patch("/catalogue-api/products/1")
@@ -128,6 +143,26 @@ class ProductRestControllerIT {
 
     @Test
     @Sql("/sql/products.sql")
+    void updateProduct_UserIsNotAuthorized_ReturnsForbidden() throws Exception {
+        //given
+        var requstBuilder = MockMvcRequestBuilders.patch("/catalogue-api/products/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                  {"title": "Одновленный товар", "details":  "Обновленное описание обновленного товара"}
+                """)
+                .with(jwt().jwt(builder -> builder.claim("scope", "view_catalogue")));
+        //when
+        this.mockMvc.perform(requstBuilder)
+
+                //then
+                .andDo(print())
+                .andExpectAll(
+                        status().isForbidden()
+                );
+    }
+
+    @Test
+    @Sql("/sql/products.sql")
     void deleteProduct_RequestIsValid_ReturnsNoContent() throws Exception {
         //given
         var requestBuilder = MockMvcRequestBuilders.delete("/catalogue-api/products/1")
@@ -155,6 +190,22 @@ class ProductRestControllerIT {
                 .andDo(print())
                 .andExpectAll(
                         status().isNotFound()
+                );
+    }
+
+    @Test
+    @Sql("/sql/products.sql")
+    void deleteProduct_UserIsNotAuthorized_ReturnsForbidden() throws Exception {
+        //given
+        var requestBuilder = MockMvcRequestBuilders.delete("/catalogue-api/products/1")
+                .with(jwt().jwt(builder -> builder.claim("scope", "view_catalogue")));
+        //when
+        this.mockMvc.perform(requestBuilder)
+
+                //then
+                .andDo(print())
+                .andExpectAll(
+                        status().isForbidden()
                 );
     }
 }
