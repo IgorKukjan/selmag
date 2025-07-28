@@ -14,7 +14,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.ui.ConcurrentModel;
 
+import java.security.Principal;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,6 +42,43 @@ class ProductsControllerTest {
     //1-название тестируемого метода
     //2-условие при котором тестируется метод
     //3-ожидаемый результат
+
+
+    @Test
+    void getProductsList_ReturnsProductsListPage() {
+        //given
+        var model = new ConcurrentModel();
+        var filter = "товар";
+        var principal =  Mockito.mock(Principal.class);
+
+        var products = IntStream.range(1, 4)
+                .mapToObj(i -> new Product(i,  "Товар №%d".formatted(i),
+                        "Описание товара №%d".formatted(i)))
+                .toList();
+
+        doReturn(products)
+            .when(productsRestClient).findAllProducts(filter);
+
+        //when
+        var result = this.controller.getProductsList(model, filter, principal);
+
+        //then
+        assertEquals("catalogue/products/list", result);
+        assertEquals(filter, model.getAttribute("filter"));
+        assertEquals(products, model.getAttribute("products"));
+    }
+
+    @Test
+    void getNewProductPage_ReturnsNewProductPage() {
+        //given
+
+        //when
+        var result = this.controller.getNewProductPage();
+
+        //then
+        assertEquals("catalogue/products/new_product", result);
+    }
+
     @Test
     @DisplayName("createProduct создаст новый товар и перенаправит на страницу товара")
     void createProduct_RequestIsValid_ReturnsRedirectionToProductPage(){
