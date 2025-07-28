@@ -86,4 +86,63 @@ class ProductControllerIT {
         //getRequestedFor-GET-запрос "/catalogue-api/products/1"
         WireMock.verify(WireMock.getRequestedFor(WireMock.urlPathMatching("/catalogue-api/products/1")));
     }
+
+    @Test
+    void getProductEditPage_ProductExists_ReturnsProductEditPage()throws Exception {
+        //given - описываем параметры запроса, которые собираемся отправить в MockMvc
+        var requestBuilder = MockMvcRequestBuilders.get("/catalogue/products/1/edit")
+                .with(user("j.dewar").roles("MANAGER"));
+
+        //замокать поведение сервиса
+        //WireMock.get-GET-запрос на url "/catalogue-api/products/1/edit"
+        WireMock.stubFor(WireMock.get(WireMock.urlPathMatching("/catalogue-api/products/1"))
+                .willReturn(WireMock
+                        .ok/*статус*/("""
+                                {"id": 1, "title": "Товар №1", "details": "Описание товара №1"}
+                                """).withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)));
+
+        //when - выполняем запрос
+        this.mockMvc.perform(requestBuilder)
+
+        //then - манипуляции с результатом
+                .andDo(print())
+                .andExpectAll(
+                        status().isOk(),
+                        view().name("catalogue/products/edit"),
+                        model().attribute("product", new Product(1, "Товар №1", "Описание товара №1"))
+                );
+
+        //Можно провалидировать, что вызов данного метода у нас был
+        //getRequestedFor-GET-запрос "/catalogue-api/products/1"
+        WireMock.verify(WireMock.getRequestedFor(WireMock.urlPathMatching(("/catalogue-api/products/1"))));
+    }
+
+    @Test
+    void getProductEditPage_ProductDoesNotExist_ReturnsError404Page() throws Exception{
+        //given - описываем параметры запроса, которые собираемся отправить в MockMvc
+        var requestBuilder = MockMvcRequestBuilders.get("/catalogue/products/1/edit")
+                .with(user("j.dewar").roles("MANAGER"));
+
+        //замокать поведение сервиса
+        //WireMock.get-GET-запрос на url "/catalogue-api/products/1/edit"
+        WireMock.stubFor(WireMock.get(WireMock.urlPathMatching("/catalogue-api/products/1"))
+                .willReturn(WireMock
+                        .notFound()));
+
+        //when - выполняем запрос
+        this.mockMvc.perform(requestBuilder)
+
+        //then - манипуляции с результатом
+                .andDo(print())
+                .andExpectAll(
+                        status().isNotFound(),
+                        view().name("errors/404"),
+                        model().attribute("error",  "Товар не найден")
+                );
+
+        //Можно провалидировать, что вызов данного метода у нас был
+        //getRequestedFor-GET-запрос "/catalogue-api/products/1"
+        WireMock.verify(WireMock.getRequestedFor(WireMock.urlPathMatching(("/catalogue-api/products/1"))));
+    }
+
 }
