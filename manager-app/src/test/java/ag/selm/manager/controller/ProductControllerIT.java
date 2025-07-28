@@ -294,4 +294,81 @@ class ProductControllerIT {
                             "details": null
                         }""")));
     }
+
+    @Test
+    void deleteProduct_ProductExists_RedirectsToProductListPage() throws Exception{
+        //given - описываем параметры запроса, которые собираемся отправить в MockMvc
+        var requestBuilder = MockMvcRequestBuilders.post("/catalogue/products/1/delete")
+                .with(user("j.dewar").roles("MANAGER"))
+                .with(csrf());
+
+        //замокать поведение сервиса
+        //WireMock.get-GET-запрос на url "/catalogue-api/products/1"
+        WireMock.stubFor(WireMock.get("/catalogue-api/products/1")
+                .willReturn(WireMock.okJson("""
+                        {
+                            "id": 1,
+                            "title": "Товар",
+                            "details": "Описание товара"
+                        }
+                        """)));
+
+        //замокать поведение сервиса
+        //WireMock.delete-DELETE-запрос на url "/catalogue-api/products/1"
+        WireMock.stubFor(WireMock.delete(WireMock.urlPathMatching(("/catalogue-api/products/1")))
+                .willReturn(
+                    WireMock.noContent()
+                )
+        );
+
+        //when - выполняем запрос
+        this.mockMvc.perform(requestBuilder)
+
+        //then - манипуляции с результатом
+                .andDo(print())
+                .andExpectAll(
+                    status().is3xxRedirection(),
+                    redirectedUrl("/catalogue/products/list")
+                );
+
+        //Можно провалидировать, что вызов данного метода у нас был
+        //getRequestedFor-GET-запрос "/catalogue-api/products/1"
+        WireMock.verify(WireMock.getRequestedFor(WireMock.urlPathMatching(("/catalogue-api/products/1"))));
+
+        //Можно провалидировать, что вызов данного метода у нас был
+        //deleteRequestedFor-DELETE-запрос "/catalogue-api/products/1"
+        WireMock.verify(WireMock.deleteRequestedFor(WireMock.urlPathMatching("/catalogue-api/products/1")));
+    }
+
+    @Test
+    void deleteProduct_ProductDoesNotExist_ReturnsError404Page() throws Exception{
+        //given - описываем параметры запроса, которые собираемся отправить в MockMvc
+        var requestBuilder = MockMvcRequestBuilders.post("/catalogue/products/1/delete")
+                .with(user("j.dewar").roles("MANAGER"))
+                .with(csrf());
+
+
+        //замокать поведение сервиса
+        //WireMock.delete-DELETE-запрос на url "/catalogue-api/products/1"
+        WireMock.stubFor(WireMock.delete(WireMock.urlPathMatching(("/catalogue-api/products/1")))
+                .willReturn(
+                        WireMock.notFound()
+                )
+        );
+
+        //when - выполняем запрос
+        this.mockMvc.perform(requestBuilder)
+
+                //then - манипуляции с результатом
+                .andDo(print())
+                .andExpectAll(
+                        status().isNotFound(),
+                        view().name("errors/404"),
+                        model().attribute("error", "Товар не найден")
+                );
+
+        //Можно провалидировать, что вызов данного метода у нас был
+        //getRequestedFor-GET-запрос "/catalogue-api/products/1"
+        WireMock.verify(WireMock.getRequestedFor(WireMock.urlPathMatching(("/catalogue-api/products/1"))));
+    }
 }
