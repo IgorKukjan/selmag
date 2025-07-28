@@ -65,6 +65,23 @@ class ProductControllerIT {
     }
 
     @Test
+    void getProduct_UserIsNotAuthorized_ReturnsForbidden() throws Exception {
+        //given - описываем параметры запроса, которые собираемся отправить в MockMvc
+        var requestBuilder = MockMvcRequestBuilders.get("/catalogue/products/1")
+                .with(user("j.daniels"));
+
+        //when - выполняем запрос
+        this.mockMvc.perform(requestBuilder)
+
+                //then - манипуляции с результатом
+                .andDo(print())//вывести в лог
+                .andExpectAll(
+                        status().isForbidden()
+                );
+    }
+
+
+    @Test
     void getProduct_ProductDoesNotExist_ReturnsError404Page() throws Exception {
         //given - описываем параметры запроса, которые собираемся отправить в MockMvc
         var requestBuilder = MockMvcRequestBuilders.get("/catalogue/products/1")
@@ -148,6 +165,21 @@ class ProductControllerIT {
         //Можно провалидировать, что вызов данного метода у нас был
         //getRequestedFor-GET-запрос "/catalogue-api/products/1"
         WireMock.verify(WireMock.getRequestedFor(WireMock.urlPathMatching(("/catalogue-api/products/1"))));
+    }
+
+    @Test
+    void getProductEditPage_UserIsNotAuthorized_ReturnsForbidden()throws Exception {
+        //given - описываем параметры запроса, которые собираемся отправить в MockMvc
+        var requestBuilder = MockMvcRequestBuilders.get("/catalogue/products/1/edit")
+                .with(user("j.daniels"));
+
+        //when - выполняем запрос
+        this.mockMvc.perform(requestBuilder)
+                //then - манипуляции с результатом
+                .andDo(print())
+                .andExpectAll(
+                        status().isForbidden()
+                );
     }
 
     @Test
@@ -296,6 +328,26 @@ class ProductControllerIT {
     }
 
     @Test
+    void updateProduct_UserIsNotAuthorized_ReturnsForbidden() throws Exception{
+        //given - описываем параметры запроса, которые собираемся отправить в MockMvc
+        var requestBuilder = MockMvcRequestBuilders.post("/catalogue/products/1/edit")
+                .param("title", "Обновленный товар")
+                .param("details", "Описание обновленного товара")
+                .with(user("j.daniels"))
+                .with(csrf());
+
+        //when - выполняем запрос
+        this.mockMvc.perform(requestBuilder)
+
+                //then - манипуляции с результатом
+                .andDo(print())
+                .andExpectAll(
+                        status().isForbidden()
+                );
+    }
+
+
+    @Test
     void deleteProduct_ProductExists_RedirectsToProductListPage() throws Exception{
         //given - описываем параметры запроса, которые собираемся отправить в MockMvc
         var requestBuilder = MockMvcRequestBuilders.post("/catalogue/products/1/delete")
@@ -370,5 +422,22 @@ class ProductControllerIT {
         //Можно провалидировать, что вызов данного метода у нас был
         //getRequestedFor-GET-запрос "/catalogue-api/products/1"
         WireMock.verify(WireMock.getRequestedFor(WireMock.urlPathMatching(("/catalogue-api/products/1"))));
+    }
+
+    @Test
+    void deleteProduct_UserIsNotAuthorized_ReturnsForbidden() throws Exception{
+        //given - описываем параметры запроса, которые собираемся отправить в MockMvc
+        var requestBuilder = MockMvcRequestBuilders.post("/catalogue/products/1/delete")
+                .with(user("j.daniels"))
+                .with(csrf());
+
+        //when - выполняем запрос
+        this.mockMvc.perform(requestBuilder)
+
+                //then - манипуляции с результатом
+                .andDo(print())
+                .andExpectAll(
+                        status().isForbidden()
+                );
     }
 }
