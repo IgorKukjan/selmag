@@ -27,8 +27,8 @@ public class ProductsRestController {
     @GetMapping
     public Iterable<Product> findProducts(@RequestParam(name = "filter", required = false) String filter,
                                           Principal principal) {
-        LoggerFactory.getLogger(ProductsRestController.class).info("Principal: {}", ((JwtAuthenticationToken)principal).getToken()
-                .getClaimAsString("email"));
+//        LoggerFactory.getLogger(ProductsRestController.class).info("Principal: {}", ((JwtAuthenticationToken)principal).getToken()
+//                .getClaimAsString("email"));
 
         return this.productService.findAllProducts(filter);
     }
