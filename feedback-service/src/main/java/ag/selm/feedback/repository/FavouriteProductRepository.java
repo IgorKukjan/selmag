@@ -11,9 +11,15 @@ public interface FavouriteProductRepository extends ReactiveCrudRepository<Favou
 
 //    Mono<FavouriteProduct> save(FavouriteProduct favouriteProduct);
 
-    Mono<Void> deleteByProductId(int productId);
+//    Mono<Void> deleteByProductId(int productId);
 
-    Mono<FavouriteProduct> findByProductId(int productId);
+//    Mono<FavouriteProduct> findByProductId(int productId);
+
+    Flux<FavouriteProduct> findAllByUserId(String userId);
+
+    Mono<FavouriteProduct> findByProductIdAndUserId(int productId, String userId);
+
+    Mono<Void> deleteByProductIdAndUserId(int productId, String userId);
 
 //    Flux<FavouriteProduct> findAll();
 }
