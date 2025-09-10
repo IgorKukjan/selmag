@@ -29,7 +29,7 @@ public class WebClientFavouriteProductsClient implements FavouriteProductsClient
     public Mono<FavouriteProduct> findFavouriteProductByProductId(int productId) {
         return this.webClient
                 .get()
-                .uri("feedback-api/favourite-productsby-product-id/{productId}", productId)
+                .uri("feedback-api/favourite-products/by-product-id/{productId}", productId)
                 .retrieve().bodyToMono(FavouriteProduct.class)
                 //когда нет указанного избранного  товара, то у нас там на той стороне пустой Mono
                 //нужно это обработать. ошибка 404
