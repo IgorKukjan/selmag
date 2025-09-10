@@ -47,7 +47,8 @@ public class WebClientFavouriteProductsClient implements FavouriteProductsClient
                 //WebClientResponseException нужно преобразовать к списку ошибок(не можем тк возвращаемый тип Mono<FavouriteProduct>)
                 //либо преобразовать в другое исключение нами написанное ClientBadRequestException и более формализованное(если WebClient заменится, исключение тоже поменяется)
                 .onErrorMap(WebClientResponseException.BadRequest.class,
-                        exception -> new ClientBadRequestException(exception,
+                        exception -> new ClientBadRequestException("Возникла ошибка при добавление товара в избранные",
+                                exception,
                                 ((List<String>)exception.getResponseBodyAs(ProblemDetail.class)
                                         .getProperties().get("errors"))));
     }

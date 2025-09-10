@@ -36,7 +36,8 @@ public class WebClientProductReviewsClient implements ProductReviewsClient {
                 //WebClientResponseException нужно преобразовать к списку ошибок(не можем тк возвращаемый тип Mono<ProductReview>)
                 //либо преобразовать в другое исключение нами написанное ClientBadRequestException и более формализованное(если WebClient заменится, исключение тоже поменяется)
                 .onErrorMap(WebClientResponseException.BadRequest.class,
-                        exception -> new ClientBadRequestException(exception,
+                        exception -> new ClientBadRequestException("Возникла ошибка при добавление отзыва о товаре",
+                                    exception,
                                     ((List<String>)exception.getResponseBodyAs(ProblemDetail.class)
                                             .getProperties().get("errors"))));
     }

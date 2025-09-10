@@ -35,7 +35,9 @@ public class ProductController {
     @ModelAttribute(name = "product", binding = false)
     public Mono<Product> loadProduct(@PathVariable("productId") int id) {
         return this.productsClient.findProduct(id)
-                .switchIfEmpty(Mono.error(new NoSuchElementException("customer.products.error.not_found")));
+                .switchIfEmpty(Mono.defer(
+                        () -> Mono.error(new NoSuchElementException("customer.products.error.not_found"))
+                ));
     }
 
     @GetMapping
