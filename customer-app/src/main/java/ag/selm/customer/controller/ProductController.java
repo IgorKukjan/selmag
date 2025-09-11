@@ -8,6 +8,8 @@ import ag.selm.customer.controller.payload.NewProductReviewPayload;
 import ag.selm.customer.entity.Product;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.security.web.server.csrf.CsrfToken;
 import org.springframework.security.web.reactive.result.view.CsrfRequestDataValueProcessor;
 import org.springframework.stereotype.Controller;
@@ -90,8 +92,11 @@ public class ProductController {
     }
 
     @ExceptionHandler(NoSuchElementException.class)
-    public String handleNoSuchElementException(NoSuchElementException ex, Model model) {
+    public String handleNoSuchElementException(NoSuchElementException ex,
+                                               Model model,
+                                               ServerHttpResponse response) {
         model.addAttribute("error", ex.getMessage());
+        response.setStatusCode(HttpStatus.NOT_FOUND);
         return "errors/404";
     }
 
