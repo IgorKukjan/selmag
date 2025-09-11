@@ -116,6 +116,9 @@ class ProductControllerTest {
                 .expectNext("customer/products/product")
                 .verifyComplete();
 
+        assertEquals(productReviews, model.getAttribute("reviews"));
+        assertEquals(true, model.getAttribute("inFavourite"));
+
         //проверка действительно был вызван метод
         verify(this.productReviewsClient).findProductReviewsByProductId(1);
         verify(this.favouriteProductsClient).findFavouriteProductByProductId(1);
@@ -198,16 +201,20 @@ class ProductControllerTest {
     void createReview_RequestIsValid_RedirectsToProductPage(){
         //given
         var model = new ConcurrentModel();
+        var response = new MockServerHttpResponse();
+
         doReturn(Mono.just(new ProductReview(UUID.fromString("86efa22c-cbae-11ee-ab01-679baf165fb7"), 1, 3, "Ну, на троечку...")))
                 .when(this.productReviewsClient).createProductReview(1, 3, "Ну на троечку");
 
         //when
-        StepVerifier.create(this.controller.createReview(1, new NewProductReviewPayload(3, "Ну на троечку"), model))
+        StepVerifier.create(this.controller.createReview(1, new NewProductReviewPayload(3, "Ну на троечку"), model, response))
         //then
                 //Первый сигнал проверяется с помощью expectNext
                 .expectNext("redirect:/customer/products/1")
                 //используем verify()  для запуска нашего теста
                 .verifyComplete();
+
+        assertNull(response.getStatusCode());
 
         //проверка действительно был вызван метод
         verify(this.productReviewsClient).createProductReview(1, 3, "Ну на троечку");
@@ -221,6 +228,7 @@ class ProductControllerTest {
     void createReview_RequestIsInvalid_ReturnsProductPageWithPayloadAndErrors(){
         //given
         var model = new ConcurrentModel();
+        var response = new MockServerHttpResponse();
 
         doReturn(Mono.error(new ClientBadRequestException("Возникла какае-то ошибка",
                 null,
@@ -231,14 +239,18 @@ class ProductControllerTest {
                 .when(this.favouriteProductsClient).findFavouriteProductByProductId(1);
 
         //when
-        StepVerifier.create(this.controller.createReview(1, new NewProductReviewPayload(null, "Ну на троечку"), model))
+        StepVerifier.create(this.controller.createReview(1, new NewProductReviewPayload(null, "Ну на троечку"), model, response))
         //then
                 //Первый сигнал проверяется с помощью expectNext
                 .expectNext("customer/products/product")
                 //используем verify()  для запуска нашего теста
                 .verifyComplete();
 
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
 
+        assertEquals(true, model.getAttribute("inFavourite"));
+        assertEquals(new NewProductReviewPayload(null, "Ну на троечку"), model.getAttribute("payload"));
+        assertEquals(List.of("Ошибка 1", "Ошибка 2"), model.getAttribute("errors"));
 
         //проверка действительно был вызван метод
         verify(this.productReviewsClient).createProductReview(1, null, "Ну на троечку");

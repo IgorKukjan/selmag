@@ -77,7 +77,8 @@ public class ProductController {
     @PostMapping("create-review")
     public Mono<String> createReview(@PathVariable("productId") int id,
                                      NewProductReviewPayload payload,
-                                     Model model) {
+                                     Model model,
+                                     ServerHttpResponse response) {
         return this.productReviewsClient.createProductReview(id, payload.rating(), payload.review())
                 .thenReturn("redirect:/customer/products/%d".formatted(id))
                //как вернуть в нормальное состояние stream в случае возникновения ошибки
@@ -85,6 +86,7 @@ public class ProductController {
                     model.addAttribute("inFavourite", false);
                     model.addAttribute("payload", payload);
                     model.addAttribute("errors", exception.getErrors());
+                    response.setStatusCode(HttpStatus.BAD_REQUEST);
                     return this.favouriteProductsClient.findFavouriteProductByProductId(id)
                             .doOnNext(favouriteProduct -> model.addAttribute("inFavourite", true))
                             .thenReturn("customer/products/product");
