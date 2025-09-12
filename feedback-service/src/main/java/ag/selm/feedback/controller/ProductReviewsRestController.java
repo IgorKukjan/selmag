@@ -36,7 +36,7 @@ public class ProductReviewsRestController {
     public Flux<ProductReview> findProductReviewsByProductId(@PathVariable("productId") int productId,
                                                              Mono<Principal> principalMono,
                                                              Mono<JwtAuthenticationToken> jwtAuthenticationTokenMono) {
-//        return this.productReviewsService.findProductReviewsByProduct(productId);
+        return this.productReviewsService.findProductReviewsByProduct(productId);
 
 //        return principalMono.flatMapMany(principal -> {
 //            log.info("Principal: {}", principal);
@@ -44,8 +44,8 @@ public class ProductReviewsRestController {
 //                    .find(query(where("productId").is(productId)) , ProductReview.class);
 //        });
 
-        return this.reactiveMongoTemplate
-                .find(query(where("productId").is(productId)) , ProductReview.class);
+//        return this.reactiveMongoTemplate
+//                .find(query(where("productId").is(productId)) , ProductReview.class);
     }
 
     @PostMapping
