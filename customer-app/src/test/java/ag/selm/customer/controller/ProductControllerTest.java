@@ -111,7 +111,7 @@ class ProductControllerTest {
 
         //when
         //создать stream, запустить его
-        StepVerifier.create(this.controller.getProductPage(1, model))
+        StepVerifier.create(this.controller.getProductPage( Mono.just(new Product(1, "Товар №1", "Описание товара №1")), model))
         //then
                 .expectNext("customer/products/product")
                 .verifyComplete();
@@ -207,7 +207,7 @@ class ProductControllerTest {
                 .when(this.productReviewsClient).createProductReview(1, 3, "Ну на троечку");
 
         //when
-        StepVerifier.create(this.controller.createReview(1, new NewProductReviewPayload(3, "Ну на троечку"), model, response))
+        StepVerifier.create(this.controller.createReview( Mono.just(new Product(1, "Товар №1", "Описание товара №1")), new NewProductReviewPayload(3, "Ну на троечку"), model, response))
         //then
                 //Первый сигнал проверяется с помощью expectNext
                 .expectNext("redirect:/customer/products/1")
@@ -239,7 +239,7 @@ class ProductControllerTest {
                 .when(this.favouriteProductsClient).findFavouriteProductByProductId(1);
 
         //when
-        StepVerifier.create(this.controller.createReview(1, new NewProductReviewPayload(null, "Ну на троечку"), model, response))
+        StepVerifier.create(this.controller.createReview( Mono.just(new Product(1, "Товар №1", "Описание товара №1")), new NewProductReviewPayload(null, "Ну на троечку"), model, response))
         //then
                 //Первый сигнал проверяется с помощью expectNext
                 .expectNext("customer/products/product")

@@ -43,15 +43,15 @@ public class ProductController {
     }
 
     @GetMapping
-    public Mono<String> getProductPage(@PathVariable("productId") int id,
+    public Mono<String> getProductPage(@ModelAttribute("product") Mono<Product> productMono,
                                        Model model) {
         model.addAttribute("inFavourite", false);
-        return this.productReviewsClient.findProductReviewsByProductId(id)
+        return productMono.flatMap(product ->  this.productReviewsClient.findProductReviewsByProductId(product.id())
                 .collectList()
                 .doOnNext(productReviews -> model.addAttribute("reviews", productReviews))
-                .then(this.favouriteProductsClient.findFavouriteProductByProductId(id)
-                        .doOnNext(favouriteProduct -> model.addAttribute("inFavourite", true))
-                        .thenReturn("customer/products/product"));
+                .then(this.favouriteProductsClient.findFavouriteProductByProductId(product.id())
+                        .doOnNext(favouriteProduct -> model.addAttribute("inFavourite", true)))
+                .thenReturn("customer/products/product"));
     }
 
     @PostMapping("add-to-favourites")
@@ -75,22 +75,22 @@ public class ProductController {
     }
 
     @PostMapping("create-review")
-    public Mono<String> createReview(@PathVariable("productId") int id,
+    public Mono<String> createReview(@ModelAttribute("product") Mono<Product> productMono,
                                      NewProductReviewPayload payload,
                                      Model model,
                                      ServerHttpResponse response) {
-        return this.productReviewsClient.createProductReview(id, payload.rating(), payload.review())
-                .thenReturn("redirect:/customer/products/%d".formatted(id))
-               //как вернуть в нормальное состояние stream в случае возникновения ошибки
+        return productMono.flatMap(product -> this.productReviewsClient.createProductReview(product.id(), payload.rating(), payload.review())
+                .thenReturn("redirect:/customer/products/%d".formatted(product.id()))
+                //как вернуть в нормальное состояние stream в случае возникновения ошибки
                 .onErrorResume(ClientBadRequestException.class, exception -> {
                     model.addAttribute("inFavourite", false);
                     model.addAttribute("payload", payload);
                     model.addAttribute("errors", exception.getErrors());
                     response.setStatusCode(HttpStatus.BAD_REQUEST);
-                    return this.favouriteProductsClient.findFavouriteProductByProductId(id)
+                    return this.favouriteProductsClient.findFavouriteProductByProductId(product.id())
                             .doOnNext(favouriteProduct -> model.addAttribute("inFavourite", true))
                             .thenReturn("customer/products/product");
-                });
+                }));
     }
 
     @ExceptionHandler(NoSuchElementException.class)
